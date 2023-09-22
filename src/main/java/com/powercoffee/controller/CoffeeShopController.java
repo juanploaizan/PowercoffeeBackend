@@ -1,85 +1,48 @@
 package com.powercoffee.controller;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
-import com.powercoffee.model.CoffeeShop;
+import com.powercoffee.dto.CoffeeShopDTO;
+import com.powercoffee.dto.PaginationResponse;
 import com.powercoffee.service.CoffeeShopService;
-import lombok.AllArgsConstructor;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.IanaLinkRelations;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/v1/coffee-shops")
-@AllArgsConstructor
+@RequestMapping("api/coffee-shops")
+@RequiredArgsConstructor
 public class CoffeeShopController {
 
-    private CoffeeShopService coffeeShopService;
+    private final CoffeeShopService coffeeShopService;
 
     @GetMapping
-    public ResponseEntity<List<CoffeeShop>> getAllCoffeeShops() {
-
-        List<CoffeeShop> coffeeShops = coffeeShopService.getAllCoffeeShops();
-        if (coffeeShops.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        for (CoffeeShop coffeeShop : coffeeShops) {
-            coffeeShop.add(linkTo(methodOn(CoffeeShopController.class).getCoffeeShop(coffeeShop.getId())).withSelfRel());
-            coffeeShop.add(linkTo(methodOn(CoffeeShopController.class).getAllCoffeeShops()).withRel(IanaLinkRelations.COLLECTION));
-        }
-        CollectionModel<CoffeeShop> model = CollectionModel.of(coffeeShops);
-        model.add(linkTo(methodOn(CoffeeShopController.class).getAllCoffeeShops()).withSelfRel());
-        return new ResponseEntity<>(coffeeShops, HttpStatus.OK);
+    public ResponseEntity<PaginationResponse<CoffeeShopDTO>> getAllCoffeeShops(@RequestParam(value = "pageNumber", defaultValue = "0", required = false) Integer pageNumber,
+                                                                @RequestParam(value = "pageSize", defaultValue = "10", required = false) Integer pageSize,
+                                                                @RequestParam(value = "sortBy", defaultValue = "id", required = false) String sortBy,
+                                                                @RequestParam(value = "sortDir", defaultValue = "asc", required = false) String sortDir) {
+        return new ResponseEntity<>(coffeeShopService.getAllCoffeeShops(pageNumber, pageSize, sortBy, sortDir), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CoffeeShop> getCoffeeShop(@PathVariable Integer id) {
-        System.err.println(id);
-        try {
-            CoffeeShop coffeeShop = coffeeShopService.getCoffeeShop(id);
-            coffeeShop.add(linkTo(methodOn(CoffeeShopController.class).getCoffeeShop(coffeeShop.getId())).withSelfRel());
-            coffeeShop.add(linkTo(methodOn(CoffeeShopController.class).getAllCoffeeShops()).withRel(IanaLinkRelations.COLLECTION));
-            return new ResponseEntity<>(coffeeShop, HttpStatus.OK);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<CoffeeShopDTO> getCoffeeShopById(@PathVariable Integer id) {
+        return new ResponseEntity<>(coffeeShopService.getCoffeeShopById(id), HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<CoffeeShop> saveCoffeeShop(@RequestBody CoffeeShop coffeeShop) {
-        try {
-            CoffeeShop savedCoffeeShop = coffeeShopService.saveCoffeeShop(coffeeShop);
-            savedCoffeeShop.add(linkTo(methodOn(CoffeeShopController.class).getCoffeeShop(savedCoffeeShop.getId())).withSelfRel());
-            savedCoffeeShop.add(linkTo(methodOn(CoffeeShopController.class).getAllCoffeeShops()).withRel(IanaLinkRelations.COLLECTION));
-            return ResponseEntity.created(linkTo(methodOn(CoffeeShopController.class).getCoffeeShop(savedCoffeeShop.getId())).toUri()).body(savedCoffeeShop);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<CoffeeShopDTO> createCoffeeShop(@RequestBody CoffeeShopDTO coffeeShopDTO) {
+        return new ResponseEntity<>(coffeeShopService.createCoffeeShop(coffeeShopDTO), HttpStatus.CREATED);
     }
 
-    @PutMapping
-    public ResponseEntity<CoffeeShop> updateCoffeeShop(@RequestBody CoffeeShop coffeeShop) {
-        try {
-            CoffeeShop updatedCoffeeShop = coffeeShopService.saveCoffeeShop(coffeeShop);
-            updatedCoffeeShop.add(linkTo(methodOn(CoffeeShopController.class).getCoffeeShop(updatedCoffeeShop.getId())).withSelfRel());
-            updatedCoffeeShop.add(linkTo(methodOn(CoffeeShopController.class).getAllCoffeeShops()).withRel(IanaLinkRelations.COLLECTION));
-            return new ResponseEntity<>(updatedCoffeeShop, HttpStatus.OK);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+    @PutMapping("/{id}")
+    public ResponseEntity<CoffeeShopDTO> updateCoffeeShop(@PathVariable Integer id, @RequestBody CoffeeShopDTO coffeeShopDTO) {
+        return new ResponseEntity<>(coffeeShopService.updateCoffeeShop(id, coffeeShopDTO), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteCoffeeShop(@PathVariable Integer id) {
-        try {
-            coffeeShopService.deleteCoffeeShop(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<Void> deleteCoffeeShop(@PathVariable Integer id) {
+        coffeeShopService.deleteCoffeeShop(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
 
 }

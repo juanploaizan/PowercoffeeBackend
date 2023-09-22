@@ -31,27 +31,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestBody LoginRequest request) {
-        try {
-            String jwt = authService.generateJwt(request);
-            return ResponseEntity.ok(new JwtResponse(jwt));
-        } catch(BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(messageSource.getMessage("error_INVALID_CREDENTIALS", null, Locale.getDefault()));
-        } catch (Exception e) {
-            //e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+        String jwt = authService.generateJwt(request);
+        return ResponseEntity.ok(new JwtResponse(jwt));
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Object> register(@RequestBody RegisterRequest request) {
-        try {
-            String jwt = authService.register(request);
-            return ResponseEntity.ok(new JwtResponse(jwt));
-        } catch(AuthException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        } catch (Exception e) {
-            //e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(messageSource.getMessage("error_INTERNAL_SERVER_ERROR", null, Locale.getDefault()));
-        }
+    public ResponseEntity<Object> register(@RequestBody RegisterRequest request) throws Exception {
+        String jwt = authService.register(request);
+        return ResponseEntity.ok(new JwtResponse(jwt));
     }
 }

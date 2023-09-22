@@ -23,7 +23,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserById(Integer id) {
-        return null;
+        return userRepo.getReferenceById(id);
     }
 
     @Override

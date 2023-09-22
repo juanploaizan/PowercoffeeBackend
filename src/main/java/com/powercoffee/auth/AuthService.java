@@ -27,18 +27,16 @@ public class AuthService {
     private final MessageSource messageSource;
 
     public String generateJwt(LoginRequest request) {
-        UserDetails user = userRepo.findByEmail(request.getEmail()).orElse(null);
-
+        User user = userRepo.findByEmail(request.getEmail()).orElse(null);
         if (user == null) {
-            throw new BadCredentialsException(null);
+            throw new BadCredentialsException(messageSource.getMessage("error_INVALID_CREDENTIALS", null, Locale.getDefault()));
         }
-
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
             return jwtService.getToken(user);
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException(null);
-        } catch (AuthenticationException e) {
+        } catch (Exception e) {
             throw new RuntimeException(messageSource.getMessage("error_AUTH_ERROR", null, Locale.getDefault()));
         }
     }

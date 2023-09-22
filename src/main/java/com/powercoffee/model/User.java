@@ -2,19 +2,17 @@ package com.powercoffee.model;
 
 import com.powercoffee.enums.Role;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Data
 @Builder
@@ -46,14 +44,13 @@ public class User extends RepresentationModel<User> implements Serializable, Use
     private Role role;
 
     // Relations
-    @OneToMany(mappedBy = "admin")
-    private List<CoffeeShop> cafeteriaList;
+    @OneToMany(mappedBy = "admin", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CoffeeShop> cafeteriaList;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
     }
-
 
     @Override
     public String getUsername() {

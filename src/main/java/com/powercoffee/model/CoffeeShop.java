@@ -1,6 +1,5 @@
 package com.powercoffee.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.hateoas.RepresentationModel;
@@ -27,8 +26,7 @@ public class CoffeeShop extends RepresentationModel<CoffeeShop> implements Seria
     private String address;
 
     // Relations
-    @ManyToOne
-    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
     private User admin;
 
 }

@@ -1,5 +1,6 @@
 package com.powercoffee.jwt;
 
+import com.powercoffee.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -18,14 +19,20 @@ import java.util.function.Function;
 public class JwtService {
 
     private final static String SECRET_KEY = "kyzV2feGC0TVf8aU07bYu7qclCwgZWhjJr+H8DBPrH4=";
-    public String getToken(UserDetails user) {
-        return getToken(new HashMap<>(), user);
+    public String getToken(User user) {
+        HashMap<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("userId", user.getId());
+        extraClaims.put("phoneNumber", user.getPhoneNumber());
+        extraClaims.put("firstName", user.getFirstName());
+        extraClaims.put("lastName", user.getLastName());
+        extraClaims.put("role", user.getAuthorities().stream().findFirst().get().getAuthority());
+        return getToken(extraClaims, user.getUsername());
     }
 
-    private String getToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+    private String getToken(Map<String, Object> extraClaims, String subject) {
         return Jwts.builder()
                 .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 1 day
                 .signWith(getKey(), SignatureAlgorithm.HS256)

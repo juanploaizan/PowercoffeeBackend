@@ -1,15 +1,19 @@
 package com.powercoffee.service;
 
-import com.powercoffee.model.CoffeeShop;
+import com.powercoffee.dto.CoffeeShopDTO;
+import com.powercoffee.dto.PaginationResponse;
 
 import java.util.List;
 
 public interface CoffeeShopService {
-    List<CoffeeShop> getAllCoffeeShops();
+    CoffeeShopDTO createCoffeeShop(CoffeeShopDTO coffeeShopDTO);
 
-    CoffeeShop getCoffeeShop(Integer id);
+    PaginationResponse<CoffeeShopDTO> getAllCoffeeShops(Integer pageNumber, Integer pageSize, String sortBy, String sortDir);
 
-    CoffeeShop saveCoffeeShop(CoffeeShop coffeeShop);
+    CoffeeShopDTO getCoffeeShopById(Integer id);
+
+    CoffeeShopDTO updateCoffeeShop(Integer id, CoffeeShopDTO coffeeShopDTO);
 
     void deleteCoffeeShop(Integer id);
+
 }
