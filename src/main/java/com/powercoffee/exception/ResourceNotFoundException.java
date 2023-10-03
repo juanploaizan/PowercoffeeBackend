@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class ResourceNotFoundException extends RuntimeException {
     private String resourceName;
     private String attributeName;
-    private Integer attributeValue;
+    private Object attributeValue;
 
-    public ResourceNotFoundException(String resourceName, String attributeName, Integer attributeValue) {
-        super(String.format("%s no encontrado/a con: %s: '%s'", resourceName, attributeName, attributeValue));
+    public ResourceNotFoundException(String resourceName, String attributeName, Object attributeValue) {
+        super(resourceName + " no encontrado/a con el " + attributeName + ": " + attributeValue);
         this.resourceName = resourceName;
         this.attributeName = attributeName;
         this.attributeValue = attributeValue;
