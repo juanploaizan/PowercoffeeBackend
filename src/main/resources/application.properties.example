@@ -1,0 +1,54 @@
+# ------------------- DATABASE CONFIGURATION ------------------------
+spring.datasource.url=
+spring.datasource.username=
+spring.datasource.password=
+# --------------------------------------------------------------------
+
+# ------------------- JPA CONFIGURATION ------------------------------
+spring.jpa.database-platform=
+spring.jpa.generate-ddl=
+spring.jpa.show-sql=
+spring.jpa.hibernate.ddl-auto=
+spring.jpa.properties.hibernate.globally_quoted_identifiers=
+spring.jpa.open-in-view=
+spring.jpa.properties.hibernate.dialect=
+spring.jpa.properties.hibernate.format_sql=
+# --------------------------------------------------------------------
+
+# -------------------- MAIL CONFIGURATION ----------------------------
+spring.mail.host=
+spring.mail.port=
+spring.mail.username=
+spring.mail.password=
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.ssl.trust=
+# --------------------------------------------------------------------
+
+# --------------------- SECURITY CONFIGURATION -----------------------
+powercoffee.app.jwtSecret=
+powercoffee.app.jwtExpirationMs=
+powercoffee.app.jwtCookieName=
+# --------------------------------------------------------------------
+
+# -------------------- API DOCS - SWAGGER-UI -------------------------
+springdoc.api-docs.enabled=true
+springdoc.swagger-ui.enabled=true
+springdoc.swagger-ui.path=/doc/swagger-ui/index.html
+# ---------------------------------------------------------------------
+
+# ------ PATHS TO MATCH ---------------
+# In case you want to match multiple paths you can use a comma separated list:
+# springdoc.paths-to-match=/api/**,/actuator/***
+springdoc.paths-to-match=
+# -------------------------------------
+
+# OAUTH2 CONFIGURATION
+#spring.security.oauth2.client.registration.google.client-id=
+#spring.security.oauth2.client.registration.google.client-secret=
+#spring.security.oauth2.client.registration.google.scope=openid,email,profile
+#spring.security.oauth2.client.registration.google.redirect-uri=/login/oauth2/code/google
+#spring.security.oauth2.client.provider.google.authorization-uri=https://accounts.google.com/o/oauth2/auth
+#spring.security.oauth2.client.provider.google.token-uri=https://accounts.google.com/o/oauth2/token
+
+

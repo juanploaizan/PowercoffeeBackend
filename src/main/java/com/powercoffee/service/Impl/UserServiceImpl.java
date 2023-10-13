@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -141,8 +142,12 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new EntityNotFoundException("User not found with username " + username);
         }
+        if (!Objects.equals(user.getResetPasswordToken(), token)) {
+            throw new IllegalArgumentException("Reset password error");
+        }
 
         user.setPassword(encoder.encode(newPassword));
+        user.setResetPasswordToken(null);
         userRepository.save(user);
     }
 
