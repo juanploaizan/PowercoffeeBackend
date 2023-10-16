@@ -1,29 +1,28 @@
 package com.powercoffee.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.Data;
-
-import java.io.Serializable;
+import lombok.*;
 
 @Entity
 @Data
+@Builder
 @Table(name = "coffee_shops")
-public class CoffeeShop implements Serializable {
+@NoArgsConstructor
+@AllArgsConstructor
+public class CoffeeShop {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 60)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 200)
     private String address;
 
     // Relations
-    @ManyToOne
-    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
-
 }

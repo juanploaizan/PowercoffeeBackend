@@ -1,0 +1,44 @@
+services:
+  postgresdb:
+    container_name: postgresdbcontainer
+    image: postgres:15.4
+    restart: unless-stopped
+    command: postgres -c log_statement=all
+    volumes:
+      - C:\Users\jloai\OneDrive\Documents\Docker-volumes\postgres-db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
+    environment:
+      POSTGRES_DB: powercoffee
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: letmein
+      SERVICE_TAGS: prod
+      SERVICE_NAME: postgresdb
+    networks:
+      - apinetwork
+
+  apiapplication:
+    container_name: apicontainer
+    build: .
+    image: api-application
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    expose:
+      - 8080
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/powercoffee
+      SPRING_DATASOURCE_USERNAME: 'postgres'
+      SPRING_DATASOURCE_PASSWORD: 'letmein'
+      SERVICE_TAGS: prod
+      SERICE_NAME: springapi
+    depends_on:
+      - postgresdb
+    networks:
+      - apinetwork
+
+networks:
+  apinetwork:
+    driver: bridge
