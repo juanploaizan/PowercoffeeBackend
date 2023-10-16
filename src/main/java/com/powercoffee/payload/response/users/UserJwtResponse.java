@@ -19,4 +19,6 @@ public class UserJwtResponse {
     private String email;
 
     private List<String> roles;
+
+    private String accessToken;
 }

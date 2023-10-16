@@ -1,5 +1,6 @@
 package com.powercoffee.security.jwt;
 
+import com.powercoffee.model.User;
 import com.powercoffee.security.services.UserDetailsImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.WebUtils;
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
 
 @Component
 public class JwtUtils {
@@ -38,9 +40,8 @@ public class JwtUtils {
         }
     }
 
-    public ResponseCookie generateJwtCookie(UserDetailsImpl userPrincipal) {
-        String jwt = generateTokenFromUsername(userPrincipal.getUsername());
-        return ResponseCookie.from(jwtCookieName, jwt).path("/api").maxAge(24 * 60 * 60).httpOnly(true).build();
+    public String generateJwt(UserDetailsImpl userPrincipal) {
+        return generateTokenFromUserDetails(userPrincipal);
     }
 
     public ResponseCookie getCleanJwtCookie() {
@@ -73,9 +74,20 @@ public class JwtUtils {
         return false;
     }
 
-    public String generateTokenFromUsername(String username) {
+    public String generateTokenFromUserDetails(UserDetailsImpl user) {
+        return generateTokenFromUsernameAndEmail(user.getUsername(), user.getEmail());
+    }
+
+    public String generateTokenFromUser(User user) {
+        return generateTokenFromUsernameAndEmail(user.getUsername(), user.getEmail());
+    }
+
+    public String generateTokenFromUsernameAndEmail(String username, String email) {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("username", username);
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(email)
+                .addClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(key(), SignatureAlgorithm.HS256)
