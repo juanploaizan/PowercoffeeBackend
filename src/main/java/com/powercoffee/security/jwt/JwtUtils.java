@@ -31,15 +31,6 @@ public class JwtUtils {
     @Value("${powercoffee.app.jwtCookieName}")
     private String jwtCookieName;
 
-    public String getJwtFromCookies(HttpServletRequest request) {
-        Cookie cookie = WebUtils.getCookie(request, jwtCookieName);
-        if (cookie != null) {
-            return cookie.getValue();
-        } else {
-            return null;
-        }
-    }
-
     public String generateJwt(UserDetailsImpl userPrincipal) {
         return generateTokenFromUserDetails(userPrincipal);
     }
