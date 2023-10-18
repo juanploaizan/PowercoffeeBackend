@@ -1,5 +1,6 @@
 package com.powercoffee.model;
 
+import com.powercoffee.model.enums.ECity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,4 +26,7 @@ public class CoffeeShop {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
+
+    @Enumerated(EnumType.STRING)
+    private ECity city;
 }
