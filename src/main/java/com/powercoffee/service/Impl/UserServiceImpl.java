@@ -113,7 +113,7 @@ public class UserServiceImpl implements UserService {
             throw new EntityNotFoundException("User not found with email " + email);
         }
 
-        String token = jwtUtils.generateTokenFromUsername(user.getUsername());
+        String token = jwtUtils.generateTokenFromUser(user);
 
         user.setResetPasswordToken(token);
 

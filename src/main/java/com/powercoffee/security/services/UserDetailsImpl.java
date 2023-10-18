@@ -23,10 +23,10 @@ public class UserDetailsImpl implements UserDetails {
     private String username;
 
     @Getter
-    private String phoneNumber;
+    private String email;
 
     @Getter
-    private String email;
+    private String phoneNumber;
 
     @JsonIgnore
     private String password;
