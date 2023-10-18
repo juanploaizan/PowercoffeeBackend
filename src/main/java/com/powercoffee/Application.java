@@ -1,9 +1,13 @@
 package com.powercoffee;
 
+import com.powercoffee.model.Gender;
 import com.powercoffee.model.Role;
 import com.powercoffee.model.enums.ERole;
+import com.powercoffee.model.enums.EGender;
+import com.powercoffee.repository.GenderRepository;
 import com.powercoffee.repository.RoleRepository;
 import io.swagger.v3.oas.models.OpenAPI;
+import org.apache.catalina.Store;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -38,12 +42,15 @@ public class Application {
     }
 
     @Bean
-    public CommandLineRunner run(RoleRepository roleRepository) {
+    public CommandLineRunner run(RoleRepository roleRepository, GenderRepository genderRepository){
         return args -> {
-            roleRepository.save(Role.builder().name(ERole.ROLE_CUSTOMER).build());
-            roleRepository.save(Role.builder().name(ERole.ROLE_EMPLOYEE).build());
-            roleRepository.save(Role.builder().name(ERole.ROLE_ADMIN).build());
-            roleRepository.save(Role.builder().name(ERole.ROLE_SUPER_ADMIN).build());
+            //roleRepository.save(Role.builder().name(ERole.ROLE_CUSTOMER).build());
+            //roleRepository.save(Role.builder().name(ERole.ROLE_EMPLOYEE).build());
+            //roleRepository.save(Role.builder().name(ERole.ROLE_ADMIN).build());
+            //roleRepository.save(Role.builder().name(ERole.ROLE_SUPER_ADMIN).build());
+            //genderRepository.save(Gender.builder().name(EGender.GENDER_MALE).build());
+            //genderRepository.save(Gender.builder().name(EGender.GENDER_FEMALE).build());
+            //genderRepository.save(Gender.builder().name(EGender.GENDER_OTHER).build());
         };
     }
 
