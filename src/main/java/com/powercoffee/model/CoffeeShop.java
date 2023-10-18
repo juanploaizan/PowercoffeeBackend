@@ -3,6 +3,8 @@ package com.powercoffee.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Data
 @Builder
@@ -25,4 +27,8 @@ public class CoffeeShop {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
+
+    @OneToMany(mappedBy = "coffeeShop", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<Customer> customers;
 }
