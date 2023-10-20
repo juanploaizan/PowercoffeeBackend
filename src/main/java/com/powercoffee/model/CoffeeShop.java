@@ -1,5 +1,6 @@
 package com.powercoffee.model;
 
+import com.powercoffee.model.enums.ECity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,4 +32,7 @@ public class CoffeeShop {
     @OneToMany(mappedBy = "coffeeShop", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     private List<Customer> customers;
+
+    @Enumerated(EnumType.STRING)
+    private ECity city;
 }

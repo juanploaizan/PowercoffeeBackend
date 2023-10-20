@@ -72,8 +72,6 @@ public class UserController {
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-
-        System.out.println("Login request: " + loginRequest.toString());
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -86,8 +84,6 @@ public class UserController {
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
-
-        System.out.println("User details: " + userDetails);
 
         return ResponseEntity.ok(new UserJwtResponse(userDetails.getId(),
                         userDetails.getUsername(),

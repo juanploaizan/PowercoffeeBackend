@@ -36,7 +36,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         String jwt = getTokenFromRequest(request);
-        System.out.println("jwt: " + jwt);
 
         if (jwt == null) {
             filterChain.doFilter(request, response);
@@ -44,7 +43,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         }
 
         final String email = jwtUtils.getUserNameFromJwtToken(jwt);
-        System.out.println("email: " + email);
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
