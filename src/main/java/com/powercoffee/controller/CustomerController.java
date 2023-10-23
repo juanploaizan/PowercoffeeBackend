@@ -40,7 +40,7 @@ public class CustomerController {
         return new ResponseEntity<>(customerService.getCustomerById(id), HttpStatus.OK);
     }
 
-    @PostMapping("/create-customer")
+    @PostMapping
     public ResponseEntity<?> createCustomer(@Valid @RequestBody CreateCustomerRequest customerRequest) {
         return new ResponseEntity<>(customerService.createCustomer(customerRequest), HttpStatus.CREATED);
     }
