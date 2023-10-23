@@ -16,8 +16,8 @@ COPY . /app
 # Limpia el proyecto utilizando 'gradle clean'
 RUN gradle clean
 
-# Compila la aplicación con 'gradle build', excluyendo las pruebas con '-x test'
-RUN gradle build -x test
+# Compila la aplicación con 'gradle build'
+RUN gradle build
 
 # Etapa final usando una imagen OpenJDK para la ejecución de la aplicación
 FROM openjdk:17-jdk-alpine

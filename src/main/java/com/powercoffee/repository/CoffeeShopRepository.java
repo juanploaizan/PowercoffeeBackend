@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Integer> {
+public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, String> {
     CoffeeShop findFirstByAdmin_Id(Integer adminId);
 
     List<CoffeeShop> findAllByAdmin_Id(Integer adminId);

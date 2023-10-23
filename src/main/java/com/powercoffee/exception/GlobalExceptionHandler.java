@@ -1,6 +1,7 @@
 package com.powercoffee.exception;
 
 import com.powercoffee.payload.response.ErrorResponse;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -17,6 +18,19 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    /**
+     * Handle EntityNotFoundException
+     * @param e
+     * @return ResponseEntity<ErrorResponse>
+     */
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException e) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(), e.getMessage(), e.toString()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
 
     /**
      * Handle global exceptions

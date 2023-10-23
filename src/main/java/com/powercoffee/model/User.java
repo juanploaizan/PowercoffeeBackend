@@ -52,8 +52,8 @@ public class User {
     private Set<Role> roles;
 
     // Relations
-    @JsonBackReference
     @OneToMany(mappedBy = "admin", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonBackReference
     private Set<CoffeeShop> cafeteriaList;
 }
 

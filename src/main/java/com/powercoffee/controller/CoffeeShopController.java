@@ -31,13 +31,24 @@ public class CoffeeShopController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CoffeeShopResponse> getCoffeeShopById(@PathVariable Integer id) {
+    public ResponseEntity<CoffeeShopResponse> getCoffeeShopById(@PathVariable String id) {
         return new ResponseEntity<>(coffeeShopService.getCoffeeShopById(id), HttpStatus.OK);
     }
 
     @PostMapping
     public ResponseEntity<CoffeeShopResponse> createCoffeeShop(@Valid @RequestBody CoffeeShopRequest coffeeShopDTO) {
         return new ResponseEntity<>(coffeeShopService.createCoffeeShop(coffeeShopDTO), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CoffeeShopResponse> updateCoffeeShop(@PathVariable String id, @Valid @RequestBody CoffeeShopRequest coffeeShopDTO) {
+        return new ResponseEntity<>(coffeeShopService.updateCoffeeShop(id, coffeeShopDTO), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteCoffeeShop(@PathVariable String id) {
+        coffeeShopService.deleteCoffeeShop(id);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 }

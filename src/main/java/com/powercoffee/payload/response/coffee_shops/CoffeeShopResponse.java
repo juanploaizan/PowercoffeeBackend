@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter @Setter
 public class CoffeeShopResponse {
-    private Integer id;
+    private String id;
     private String name;
     private String address;
     private String city;
