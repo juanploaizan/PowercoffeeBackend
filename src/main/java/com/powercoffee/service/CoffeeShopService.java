@@ -11,11 +11,11 @@ public interface CoffeeShopService {
 
     List<CoffeeShopResponse> getAllCoffeeShops(Integer adminId);
 
-    CoffeeShopResponse getCoffeeShopById(Integer id);
+    CoffeeShopResponse getCoffeeShopById(String id);
 
-    CoffeeShopResponse updateCoffeeShop(Integer id, CoffeeShopRequest coffeeShopDTO);
+    CoffeeShopResponse updateCoffeeShop(String id, CoffeeShopRequest coffeeShopDTO);
 
-    void deleteCoffeeShop(Integer id);
+    void deleteCoffeeShop(String id);
 
     CoffeeShopResponse getFirstCoffeeShopByAdminId(Integer adminId);
 }

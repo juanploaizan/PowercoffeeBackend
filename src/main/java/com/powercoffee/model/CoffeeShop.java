@@ -1,10 +1,11 @@
 package com.powercoffee.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.powercoffee.model.enums.ECity;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
@@ -15,8 +16,8 @@ import java.util.List;
 public class CoffeeShop {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false, length = 60)
     private String name;
@@ -24,15 +25,21 @@ public class CoffeeShop {
     @Column(nullable = false, length = 200)
     private String address;
 
+    @Enumerated(EnumType.STRING)
+    private ECity city;
+
     // Relations
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id", nullable = false)
+    @JsonManagedReference
     private User admin;
 
     @OneToMany(mappedBy = "coffeeShop", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    private List<Customer> customers;
+    private Set<Customer> customers;
 
-    @Enumerated(EnumType.STRING)
-    private ECity city;
+    @OneToMany(mappedBy = "coffeeShop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonBackReference
+    private Set<Category> categories;
+
 }

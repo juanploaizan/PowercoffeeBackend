@@ -4,17 +4,12 @@ import com.powercoffee.model.CoffeeShop;
 import com.powercoffee.model.User;
 import com.powercoffee.model.enums.ECity;
 import com.powercoffee.payload.request.coffee_shops.CoffeeShopRequest;
-import com.powercoffee.payload.response.PaginationResponse;
 import com.powercoffee.payload.response.coffee_shops.CoffeeShopResponse;
 import com.powercoffee.repository.CoffeeShopRepository;
 import com.powercoffee.repository.UserRepository;
 import com.powercoffee.service.CoffeeShopService;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -63,19 +58,34 @@ public class CoffeeShopServiceImpl implements CoffeeShopService {
     }
 
     @Override
-    public CoffeeShopResponse getCoffeeShopById(Integer id) {
+    public CoffeeShopResponse getCoffeeShopById(String id) {
         return coffeeShopRepository.findById(id)
                 .map(this::convertToResponse).orElseThrow(() -> new EntityNotFoundException("CoffeeShop not found with id " + id));
     }
 
     @Override
-    public CoffeeShopResponse updateCoffeeShop(Integer id, CoffeeShopRequest coffeeShopDTO) {
-        return null;
+    public CoffeeShopResponse updateCoffeeShop(String id, CoffeeShopRequest coffeeShopDTO) {
+
+        User admin = userRepository.findById(coffeeShopDTO.getAdminId())
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id " + coffeeShopDTO.getAdminId()));
+
+        CoffeeShop coffeeShop = coffeeShopRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("CoffeeShop not found with id " + id));
+
+        coffeeShop.setName(coffeeShopDTO.getName());
+        coffeeShop.setAddress(coffeeShopDTO.getAddress());
+        coffeeShop.setCity(ECity.valueOf(coffeeShopDTO.getCity()));
+        coffeeShop.setAdmin(admin);
+        coffeeShop = coffeeShopRepository.save(coffeeShop);
+
+        return convertToResponse(coffeeShop);
     }
 
     @Override
-    public void deleteCoffeeShop(Integer id) {
-
+    public void deleteCoffeeShop(String id) {
+        CoffeeShop coffeeShop = coffeeShopRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("CoffeeShop not found with id " + id));
+        coffeeShopRepository.delete(coffeeShop);
     }
 
     @Override
