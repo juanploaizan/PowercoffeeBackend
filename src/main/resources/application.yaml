@@ -1,0 +1,4 @@
+# prod - dev - test
+spring:
+  profiles:
+    active: dev
