@@ -1,12 +1,12 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/powercoffee
-    username: postgres
-    password: 204060120
+    url: jdbc:postgresql://powercoffee-database-server.postgres.database.azure.com:5432/powercoffee
+    username: sqladmin
+    password: Computador1308*
 
   jpa:
     open-in-view: true
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: update
     properties:
@@ -30,7 +30,7 @@ spring:
             trust: smtp.gmail.com
 
 server:
-  port: 8080
+  port: 80
 
 powercoffee:
   app:
