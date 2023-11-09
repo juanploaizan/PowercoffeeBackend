@@ -11,6 +11,7 @@ import com.powercoffee.powercoffeeapirest.utils.services.EmailService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,9 @@ public class UserServiceImpl implements UserService {
     private final JwtUtils jwtUtils;
 
     private final EmailService emailService;
+
+    @Value("${powercoffee.app.frontendUrl}")
+    private String frontendUrl;
 
     public UserServiceImpl(UserRepository userRepository, ModelMapper modelMapper, PasswordEncoder encoder, JwtUtils jwtUtils, EmailService emailService) {
         this.userRepository = userRepository;
@@ -143,7 +147,7 @@ public class UserServiceImpl implements UserService {
                 "Estimado/a " + user.getFirstName() + ", \n\n" +
                         "Hemos recibido una solicitud para restablecer la contraseña de tu cuenta. " +
                         "Para continuar con este proceso, haz clic en el siguiente enlace o cópialo y pégalo en la barra de direcciones de tu navegador: \n" +
-                        "http://localhost:3000/reset-password/" + token + "\n\n" +
+                        frontendUrl + "/reset-password/" + token + "\n\n" +
                         "Si no solicitaste restablecer tu contraseña, ignora este mensaje y tu contraseña permanecerá sin cambios.\n\n" +
                         "Si tienes alguna pregunta o necesitas ayuda adicional, no dudes en contactar a nuestro equipo de soporte en servicioalciente.powercoffee@gmail.com y estaremos encantados de ayudarte.\n\n" +
                         "Atentamente,\n" +

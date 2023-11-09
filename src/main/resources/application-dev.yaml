@@ -25,7 +25,6 @@ spring:
           auth: true
           starttls:
             enable: true
-            required: true
           ssl:
             trust: smtp.gmail.com
 
@@ -36,3 +35,4 @@ powercoffee:
   app:
     jwtSecret: hcyj3cDPGJNPmZMMipmQSbeH37gTknV6tFjoDaQwWw8rstJahUEiSFfgMqqpc2znKrpLC9mtfRe2aqLExCuBGXyWNhr9PyNQ8iykoMTuSqDRgw6w9bdYtyUkP2i9eSZX
     jwtExpirationMs: 86400000
+    frontendUrl: http://localhost:3000
