@@ -1,9 +1,14 @@
 package com.powercoffee.powercoffeeapirest.service.Impl;
 
+import com.powercoffee.powercoffeeapirest.model.Role;
 import com.powercoffee.powercoffeeapirest.model.User;
+import com.powercoffee.powercoffeeapirest.model.enums.ERole;
+import com.powercoffee.powercoffeeapirest.payload.request.users.LoginGoogleRequest;
 import com.powercoffee.powercoffeeapirest.payload.request.users.UserRequest;
+import com.powercoffee.powercoffeeapirest.payload.response.users.UserJwtResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.users.UserResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.utils.PaginationResponse;
+import com.powercoffee.powercoffeeapirest.repository.RoleRepository;
 import com.powercoffee.powercoffeeapirest.repository.UserRepository;
 import com.powercoffee.powercoffeeapirest.security.jwt.JwtUtils;
 import com.powercoffee.powercoffeeapirest.service.UserService;
@@ -16,16 +21,22 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+
+    private final RoleRepository roleRepository;
 
     private final ModelMapper modelMapper;
 
@@ -38,8 +49,9 @@ public class UserServiceImpl implements UserService {
     @Value("${powercoffee.app.frontendUrl}")
     private String frontendUrl;
 
-    public UserServiceImpl(UserRepository userRepository, ModelMapper modelMapper, PasswordEncoder encoder, JwtUtils jwtUtils, EmailService emailService) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, ModelMapper modelMapper, PasswordEncoder encoder, JwtUtils jwtUtils, EmailService emailService) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.modelMapper = modelMapper;
         this.encoder = encoder;
         this.jwtUtils = jwtUtils;
@@ -194,6 +206,59 @@ public class UserServiceImpl implements UserService {
         if (!Objects.equals(user.getResetPasswordToken(), token)) {
             throw new IllegalArgumentException("Invalid token");
         }
+    }
+
+    @Override
+    public UserJwtResponse authenticateUserGoogle(LoginGoogleRequest loginGoogleRequest) {
+        // Obtener el usuario o crearlo si no existe
+        User user = userRepository.findByEmail(loginGoogleRequest.getEmail()).orElseGet(() -> {
+            User newUser = User.builder()
+                    .username(getUsernameFromEmail(loginGoogleRequest.getEmail()))
+                    .email(loginGoogleRequest.getEmail())
+                    .firstName(loginGoogleRequest.getFirstName())
+                    .lastName(loginGoogleRequest.getLastName())
+                    .password(encoder.encode(loginGoogleRequest.getPassword()))
+                    .build();
+            Set<Role> roles = new HashSet<>();
+            Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+            roles.add(adminRole);
+            newUser.setRoles(roles);
+            return userRepository.save(newUser);
+        });
+
+        // Generar el token JWT
+        String jwt = jwtUtils.generateTokenFromUser(user);
+
+        // Retornar la respuesta
+        return new UserJwtResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                null,
+                jwt
+        );
+    }
+
+    @Override
+    public UserJwtResponse getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user != null) {
+            String jwt = jwtUtils.generateTokenFromUser(user);
+            return new UserJwtResponse(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    null,
+                    jwt
+            );
+        }
+        return null;
+    }
+
+
+    private String getUsernameFromEmail(String email) {
+        return email.split("@")[0];
     }
 
     private UserResponse convertToResponse(User user) {

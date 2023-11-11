@@ -20,8 +20,6 @@ public class UserRequest {
     @Size(min = 5, max = 50, message = "Email must be between 5 and 50 characters")
     private String email;
 
-    @NotEmpty(message = "Phone number cannot be empty")
-    @Size(min = 10, max = 10, message = "Phone number must be 10 characters")
     private String phoneNumber;
 
     @NotEmpty(message = "First name cannot be empty")

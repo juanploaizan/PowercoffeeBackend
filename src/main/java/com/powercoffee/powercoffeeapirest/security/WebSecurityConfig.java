@@ -81,7 +81,7 @@ public class WebSecurityConfig {
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/api/users/signin", "/api/users/signup", "/api/users/forgot-password", "/api/users/reset-password/**").permitAll()
+                        auth.requestMatchers("/api/users/signin", "/api/users/signup", "/api/users/forgot-password", "/api/users/reset-password/**", "/api/users/auth/google", "/api/users/get-by-email/**").permitAll()
                                 .requestMatchers("/api/test/public", "/doc/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                 .requestMatchers("/api/cities", "/api/genders").permitAll()
                                 .anyRequest().authenticated()
