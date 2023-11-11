@@ -75,6 +75,16 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @GetMapping("/get-by-email/{email}")
+    public ResponseEntity<UserJwtResponse> getUserByEmail(@PathVariable String email) {
+        return ResponseEntity.ok(userService.getUserByEmail(email));
+    }
+
+    @PostMapping("/auth/google")
+    public ResponseEntity<UserJwtResponse> authenticateUserGoogle(@Valid @RequestBody LoginGoogleRequest loginGoogleRequest) {
+        return ResponseEntity.ok(userService.authenticateUserGoogle(loginGoogleRequest));
+    }
+
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager

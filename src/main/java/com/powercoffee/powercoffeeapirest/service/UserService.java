@@ -1,6 +1,8 @@
 package com.powercoffee.powercoffeeapirest.service;
 
+import com.powercoffee.powercoffeeapirest.payload.request.users.LoginGoogleRequest;
 import com.powercoffee.powercoffeeapirest.payload.request.users.UserRequest;
+import com.powercoffee.powercoffeeapirest.payload.response.users.UserJwtResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.users.UserResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.utils.PaginationResponse;
 
@@ -13,4 +15,6 @@ public interface UserService {
     void forgotPassword(String email);
     void resetPassword(String token, String newPassword) throws Exception;
     void checkResetPasswordToken(String token);
+    UserJwtResponse authenticateUserGoogle(LoginGoogleRequest loginGoogleRequest);
+    UserJwtResponse getUserByEmail(String email);
 }
