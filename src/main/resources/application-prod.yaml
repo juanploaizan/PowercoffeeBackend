@@ -11,7 +11,6 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
 
   mail:
@@ -36,4 +35,4 @@ powercoffee:
   app:
     jwtSecret: hcyj3cDPGJNPmZMMipmQSbeH37gTknV6tFjoDaQwWw8rstJahUEiSFfgMqqpc2znKrpLC9mtfRe2aqLExCuBGXyWNhr9PyNQ8iykoMTuSqDRgw6w9bdYtyUkP2i9eSZX
     jwtExpirationMs: 86400000
-    frontendUrl:
+    frontendUrl: https://www.powercoffee.software
