@@ -3,12 +3,17 @@ package com.powercoffee.powercoffeeapirest.service.Impl;
 import com.powercoffee.powercoffeeapirest.model.Category;
 import com.powercoffee.powercoffeeapirest.model.CoffeeShop;
 import com.powercoffee.powercoffeeapirest.model.Product;
+import com.powercoffee.powercoffeeapirest.model.User;
 import com.powercoffee.powercoffeeapirest.payload.request.products.ProductRequest;
+import com.powercoffee.powercoffeeapirest.payload.response.orders.OrderResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.products.ProductResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.utils.PaginationResponse;
 import com.powercoffee.powercoffeeapirest.repository.CategoryRepository;
 import com.powercoffee.powercoffeeapirest.repository.CoffeeShopRepository;
 import com.powercoffee.powercoffeeapirest.repository.ProductRepository;
+import com.powercoffee.powercoffeeapirest.repository.UserRepository;
+import com.powercoffee.powercoffeeapirest.security.services.UserDetailsImpl;
+import com.powercoffee.powercoffeeapirest.service.LoggerService;
 import com.powercoffee.powercoffeeapirest.service.ProductService;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
@@ -16,6 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,12 +34,16 @@ public class ProductServiceImpl implements ProductService {
     private final CoffeeShopRepository coffeeShopRepository;
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final LoggerService loggerService;
     private final ModelMapper modelMapper;
 
-    public ProductServiceImpl(CoffeeShopRepository coffeeShopRepository, CategoryRepository categoryRepository, ProductRepository productRepository, ModelMapper modelMapper) {
+    public ProductServiceImpl(CoffeeShopRepository coffeeShopRepository, CategoryRepository categoryRepository, ProductRepository productRepository, UserRepository userRepository, LoggerService loggerService, ModelMapper modelMapper) {
         this.coffeeShopRepository = coffeeShopRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
+        this.loggerService = loggerService;
         this.modelMapper = modelMapper;
     }
 
@@ -68,8 +79,11 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getProductById(String coffeeShopId, String productId) {
         // Retrieve the product from the repository by ID and coffee shop ID
         Product product = getProductByIdAndCoffeeShopId(productId, coffeeShopId);
+        ProductResponse productResponse = convertToProductResponse(product);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Product", "READ", productResponse, productResponse, userId);
         // Convert the product to a product response
-        return convertToProductResponse(product);
+        return productResponse;
     }
 
     // Implementation of the method to create a new product
@@ -92,6 +106,10 @@ public class ProductServiceImpl implements ProductService {
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
 
+        ProductResponse productResponse = convertToProductResponse(product);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Product", "CREATE", null, productResponse, userId);
+
         // Save the new product in the repository and convert it to a product response
         return convertToProductResponse(productRepository.save(product));
     }
@@ -104,6 +122,8 @@ public class ProductServiceImpl implements ProductService {
         // Retrieve the category based on the provided category ID
         Category category = getCategoryById(productRequest.getCategoryId());
 
+        ProductResponse previousProductResponse = convertToProductResponse(product);
+
         // Update the product details based on the provided request
         product.setName(productRequest.getName());
         product.setDescription(productRequest.getDescription());
@@ -113,6 +133,10 @@ public class ProductServiceImpl implements ProductService {
         product.setStock(productRequest.getStock());
         product.setCategory(category);
         product.setUpdatedAt(LocalDateTime.now());
+
+        ProductResponse actualProductResponse = convertToProductResponse(product);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Product", "UPDATE", previousProductResponse, actualProductResponse, userId);
 
         // Save the updated product in the repository and convert it to a product response
         return convertToProductResponse(productRepository.save(product));
@@ -125,6 +149,9 @@ public class ProductServiceImpl implements ProductService {
         Product product = getProductByIdAndCoffeeShopId(productId, coffeeShopId);
         // Set the 'deletedAt' timestamp for the product and save it in the repository
         product.setDeletedAt(LocalDateTime.now());
+        ProductResponse previousProductResponse = convertToProductResponse(product);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Product", "DELETE", previousProductResponse, null, userId);
         productRepository.save(product);
     }
 
@@ -158,5 +185,17 @@ public class ProductServiceImpl implements ProductService {
     // Helper method to convert a Product entity to a ProductResponse object
     private ProductResponse convertToProductResponse(Product product) {
         return modelMapper.map(product, ProductResponse.class);
+    }
+
+    private Integer obtainIdFromJwtToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new RuntimeException("Error: User is not found."));
+            return user.getId();
+        }
+
+        return null;
     }
 }

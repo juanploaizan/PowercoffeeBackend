@@ -11,10 +11,15 @@ import com.powercoffee.powercoffeeapirest.payload.response.coffee_shops.CoffeeSh
 import com.powercoffee.powercoffeeapirest.payload.response.coffee_shops.MostSellProductResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.coffee_shops.RecentOrderResponse;
 import com.powercoffee.powercoffeeapirest.repository.*;
+import com.powercoffee.powercoffeeapirest.security.jwt.JwtUtils;
+import com.powercoffee.powercoffeeapirest.security.services.UserDetailsImpl;
 import com.powercoffee.powercoffeeapirest.service.CoffeeShopService;
+import com.powercoffee.powercoffeeapirest.service.LoggerService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.Tuple;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
@@ -31,14 +36,20 @@ public class CoffeeShopServiceImpl implements CoffeeShopService {
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final CustomerRepository customerRepository;
+
+    private final LoggerService loggerService;
+
+    private final JwtUtils jwtUtils;
     private final ModelMapper modelMapper;
 
-    public CoffeeShopServiceImpl(CoffeeShopRepository coffeeShopRepository, UserRepository userRepository, OrderRepository orderRepository, OrderDetailRepository orderDetailRepository, CustomerRepository customerRepository, ModelMapper modelMapper) {
+    public CoffeeShopServiceImpl(CoffeeShopRepository coffeeShopRepository, UserRepository userRepository, OrderRepository orderRepository, OrderDetailRepository orderDetailRepository, CustomerRepository customerRepository, LoggerService loggerService, JwtUtils jwtUtils, ModelMapper modelMapper) {
         this.coffeeShopRepository = coffeeShopRepository;
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.orderDetailRepository = orderDetailRepository;
         this.customerRepository = customerRepository;
+        this.loggerService = loggerService;
+        this.jwtUtils = jwtUtils;
         this.modelMapper = modelMapper;
     }
 
@@ -67,12 +78,19 @@ public class CoffeeShopServiceImpl implements CoffeeShopService {
         coffeeShop.setAdmin(admin);
         coffeeShop = coffeeShopRepository.save(coffeeShop);
 
-        return convertToResponse(coffeeShop);
+        CoffeeShopResponse actualCoffeeShopResponse = convertToResponse(coffeeShop);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("CoffeeShop", "CREATE", null, actualCoffeeShopResponse, userId);
+
+        return actualCoffeeShopResponse;
     }
 
     @Override
     public CoffeeShopResponse getCoffeeShopById(String id) {
         CoffeeShop coffeeShop = getCoffeeShop(id);
+        CoffeeShopResponse actualCoffeeShopResponse = convertToResponse(coffeeShop);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("CoffeeShop", "READ", actualCoffeeShopResponse, actualCoffeeShopResponse, userId);
         return convertToResponse(coffeeShop);
     }
 
@@ -83,11 +101,16 @@ public class CoffeeShopServiceImpl implements CoffeeShopService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id " + coffeeShopDTO.getAdminId()));
 
         CoffeeShop coffeeShop = getCoffeeShop(id);
+        CoffeeShopResponse previousCoffeeShopResponse = convertToResponse(coffeeShop);
         coffeeShop.setName(coffeeShopDTO.getName());
         coffeeShop.setAddress(coffeeShopDTO.getAddress());
         coffeeShop.setCity(ECity.valueOf(coffeeShopDTO.getCity()));
         coffeeShop.setAdmin(admin);
         coffeeShop = coffeeShopRepository.save(coffeeShop);
+
+        CoffeeShopResponse actualCoffeeShopResponse = convertToResponse(coffeeShop);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("CoffeeShop", "UPDATE", previousCoffeeShopResponse, actualCoffeeShopResponse, userId);
 
         return convertToResponse(coffeeShop);
     }
@@ -95,6 +118,9 @@ public class CoffeeShopServiceImpl implements CoffeeShopService {
     @Override
     public void deleteCoffeeShop(String id) {
         CoffeeShop coffeeShop = getCoffeeShop(id);
+        CoffeeShopResponse previousCoffeeShopResponse = convertToResponse(coffeeShop);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("CoffeeShop", "DELETE", previousCoffeeShopResponse, null, userId);
         coffeeShopRepository.delete(coffeeShop);
     }
 
@@ -183,5 +209,17 @@ public class CoffeeShopServiceImpl implements CoffeeShopService {
 
     private CoffeeShopResponse convertToResponse(CoffeeShop coffeeShop) {
         return modelMapper.map(coffeeShop, CoffeeShopResponse.class);
+    }
+
+    private Integer obtainIdFromJwtToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new RuntimeException("Error: User is not found."));
+            return user.getId();
+        }
+
+        return null;
     }
 }

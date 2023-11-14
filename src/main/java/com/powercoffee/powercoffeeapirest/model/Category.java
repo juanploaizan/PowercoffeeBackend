@@ -36,4 +36,5 @@ public class Category {
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     @JsonBackReference
     private Set<Product> products;
+
 }

@@ -2,8 +2,9 @@ package com.powercoffee.powercoffeeapirest.payload.response.employees;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
-@Getter @Setter
+@Getter @Setter @ToString
 public class EmployeeResponse {
     private String id;
     private String dni;

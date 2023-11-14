@@ -11,6 +11,8 @@ import com.powercoffee.powercoffeeapirest.payload.response.utils.PaginationRespo
 import com.powercoffee.powercoffeeapirest.repository.RoleRepository;
 import com.powercoffee.powercoffeeapirest.repository.UserRepository;
 import com.powercoffee.powercoffeeapirest.security.jwt.JwtUtils;
+import com.powercoffee.powercoffeeapirest.security.services.UserDetailsImpl;
+import com.powercoffee.powercoffeeapirest.service.LoggerService;
 import com.powercoffee.powercoffeeapirest.service.UserService;
 import com.powercoffee.powercoffeeapirest.utils.services.EmailService;
 import jakarta.persistence.EntityExistsException;
@@ -21,7 +23,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -44,17 +46,20 @@ public class UserServiceImpl implements UserService {
 
     private final JwtUtils jwtUtils;
 
+    private final LoggerService loggerService;
+
     private final EmailService emailService;
 
     @Value("${powercoffee.app.frontendUrl}")
     private String frontendUrl;
 
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, ModelMapper modelMapper, PasswordEncoder encoder, JwtUtils jwtUtils, EmailService emailService) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, ModelMapper modelMapper, PasswordEncoder encoder, JwtUtils jwtUtils, LoggerService loggerService, EmailService emailService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.modelMapper = modelMapper;
         this.encoder = encoder;
         this.jwtUtils = jwtUtils;
+        this.loggerService = loggerService;
         this.emailService = emailService;
     }
 
@@ -81,9 +86,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getUserById(Integer id) {
-        return userRepository.findById(id)
-                .map(this::convertToResponse)
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id " + id));
+        UserResponse userResponse = convertToResponse(user);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("User", "READ", userResponse, userResponse, userId);
+
+        return userResponse;
     }
 
     @Override
@@ -91,6 +100,8 @@ public class UserServiceImpl implements UserService {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id " + id));
+
+        UserResponse previousUserResponse = convertToResponse(user);
 
         if (!Objects.equals(user.getEmail(), userRequest.getEmail())) {
             if (userRepository.existsByEmail(userRequest.getEmail())) {
@@ -117,6 +128,10 @@ public class UserServiceImpl implements UserService {
         user.setLastName(userRequest.getLastName());
         user.setAvatarNumber(userRequest.getAvatarNumber());
 
+        UserResponse actualUserResponse = convertToResponse(user);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("User", "UPDATE", previousUserResponse, actualUserResponse, userId);
+
         return convertToResponse(userRepository.save(user));
     }
 
@@ -124,6 +139,9 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Integer id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id " + id));
+        UserResponse previousUserResponse = convertToResponse(user);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("User", "DELETE", previousUserResponse, null, userId);
         userRepository.delete(user);
     }
 
@@ -265,4 +283,15 @@ public class UserServiceImpl implements UserService {
         return modelMapper.map(user, UserResponse.class);
     }
 
+    private Integer obtainIdFromJwtToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new RuntimeException("Error: User is not found."));
+            return user.getId();
+        }
+
+        return null;
+    }
 }

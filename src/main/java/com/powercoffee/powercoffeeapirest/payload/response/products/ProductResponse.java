@@ -2,8 +2,9 @@ package com.powercoffee.powercoffeeapirest.payload.response.products;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
-@Getter @Setter
+@Getter @Setter @ToString
 public class ProductResponse {
     private String id;
     private String name;

@@ -2,13 +2,18 @@ package com.powercoffee.powercoffeeapirest.service.Impl;
 
 import com.powercoffee.powercoffeeapirest.model.CoffeeShop;
 import com.powercoffee.powercoffeeapirest.model.Employee;
+import com.powercoffee.powercoffeeapirest.model.User;
 import com.powercoffee.powercoffeeapirest.model.enums.EGender;
 import com.powercoffee.powercoffeeapirest.payload.request.employees.EmployeeRequest;
+import com.powercoffee.powercoffeeapirest.payload.response.customers.CustomerResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.employees.EmployeeResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.utils.PaginationResponse;
 import com.powercoffee.powercoffeeapirest.repository.CoffeeShopRepository;
 import com.powercoffee.powercoffeeapirest.repository.EmployeeRepository;
+import com.powercoffee.powercoffeeapirest.repository.UserRepository;
+import com.powercoffee.powercoffeeapirest.security.services.UserDetailsImpl;
 import com.powercoffee.powercoffeeapirest.service.EmployeeService;
+import com.powercoffee.powercoffeeapirest.service.LoggerService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -17,6 +22,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -30,11 +37,16 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final CoffeeShopRepository coffeeShopRepository;
+    private final UserRepository userRepository;
+
+    private final LoggerService loggerService;
     private final ModelMapper modelMapper;
 
-    public EmployeeServiceImpl(EmployeeRepository employeeRepository, CoffeeShopRepository coffeeShopRepository, ModelMapper modelMapper) {
+    public EmployeeServiceImpl(EmployeeRepository employeeRepository, CoffeeShopRepository coffeeShopRepository, UserRepository userRepository, LoggerService loggerService, ModelMapper modelMapper) {
         this.employeeRepository = employeeRepository;
         this.coffeeShopRepository = coffeeShopRepository;
+        this.userRepository = userRepository;
+        this.loggerService = loggerService;
         this.modelMapper = modelMapper;
     }
 
@@ -60,7 +72,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public EmployeeResponse getEmployeeById(String employeeId, String coffeeShopId) {
         Employee employee = getEmployee(employeeId, coffeeShopId);
-        return convertToResponse(employee);
+        EmployeeResponse employeeResponse = convertToResponse(employee);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Employee", "READ", employeeResponse, employeeResponse, userId);
+        return employeeResponse;
     }
 
     @Override
@@ -99,6 +114,10 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .coffeeShop(coffeeShop)
                 .build();
 
+        EmployeeResponse employeeResponse = convertToResponse(employee);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Employee", "CREATE", null, employeeResponse, userId);
+
         return convertToResponse(employeeRepository.save(employee));
     }
 
@@ -107,6 +126,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeResponse updateEmployee(EmployeeRequest employeeRequest, String employeeId, String coffeeShopId) {
 
         Employee employee = getEmployee(employeeId, coffeeShopId);
+
+        EmployeeResponse previousEmployeeResponse = convertToResponse(employee);
 
         if (!Objects.equals(employee.getDni(), employeeRequest.getDni())) {
             if(employeeRepository.existsByCoffeeShopIdAndDni(coffeeShopId, employeeRequest.getDni())) {
@@ -140,6 +161,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setGender(EGender.valueOf(employeeRequest.getGender()));
         employee.setUpdatedAt(LocalDateTime.now());
 
+        EmployeeResponse actualEmployeeResponse = convertToResponse(employee);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Employee", "UPDATE", previousEmployeeResponse, actualEmployeeResponse, userId);
+
         return convertToResponse(employeeRepository.save(employee));
     }
     @Override
@@ -147,6 +172,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void deleteEmployee(String id, String coffeeShopId) {
         Employee employee = getEmployee(id, coffeeShopId);
         employee.setDeletedAt(LocalDateTime.now());
+        EmployeeResponse previousEmployeeResponse = convertToResponse(employee);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Employee", "DELETE", previousEmployeeResponse, null, userId);
         employeeRepository.save(employee);
     }
 
@@ -170,5 +198,17 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private EmployeeResponse convertToResponse(Employee employee) {
         return modelMapper.map(employee, EmployeeResponse.class);
+    }
+
+    private Integer obtainIdFromJwtToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new RuntimeException("Error: User is not found."));
+            return user.getId();
+        }
+
+        return null;
     }
 }

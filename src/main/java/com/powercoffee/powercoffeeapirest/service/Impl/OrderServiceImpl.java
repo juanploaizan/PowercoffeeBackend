@@ -4,13 +4,18 @@ import com.powercoffee.powercoffeeapirest.model.*;
 import com.powercoffee.powercoffeeapirest.model.enums.EOrderStatus;
 import com.powercoffee.powercoffeeapirest.payload.request.orders.OrderDetailRequest;
 import com.powercoffee.powercoffeeapirest.payload.request.orders.OrderRequest;
+import com.powercoffee.powercoffeeapirest.payload.response.employees.EmployeeResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.orders.OrderResponse;
 import com.powercoffee.powercoffeeapirest.repository.*;
+import com.powercoffee.powercoffeeapirest.security.services.UserDetailsImpl;
+import com.powercoffee.powercoffeeapirest.service.LoggerService;
 import com.powercoffee.powercoffeeapirest.service.OrderService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -27,15 +32,19 @@ public class OrderServiceImpl implements OrderService {
     private final CustomerRepository customerRepository;
     private final EmployeeRepository employeeRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final LoggerService loggerService;
     private final ModelMapper modelMapper;
 
-    public OrderServiceImpl(OrderRepository orderRepository, CoffeeShopRepository coffeeShopRepository, CustomerRepository customerRepository, EmployeeRepository employeeRepository, ProductRepository productRepository, OrderDetailRepository orderDetailRepository, ModelMapper modelMapper) {
+    public OrderServiceImpl(OrderRepository orderRepository, CoffeeShopRepository coffeeShopRepository, CustomerRepository customerRepository, EmployeeRepository employeeRepository, ProductRepository productRepository, OrderDetailRepository orderDetailRepository, UserRepository userRepository, LoggerService loggerService, ModelMapper modelMapper) {
         this.orderRepository = orderRepository;
         this.coffeeShopRepository = coffeeShopRepository;
         this.customerRepository = customerRepository;
         this.employeeRepository = employeeRepository;
         this.productRepository = productRepository;
         this.orderDetailRepository = orderDetailRepository;
+        this.userRepository = userRepository;
+        this.loggerService = loggerService;
         this.modelMapper = modelMapper;
     }
 
@@ -66,6 +75,9 @@ public class OrderServiceImpl implements OrderService {
         Order order = getOrder(orderId, coffeeShopId); // get order by id
         Set<OrderDetail> orderDetails =  orderDetailRepository.findAllByOrderId(orderId);
         order.setOrderDetails(orderDetails);
+        OrderResponse orderResponse = convertToOrderResponse(order);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Order", "READ", orderResponse, orderResponse, userId);
         return convertToOrderResponse(order);
     }
 
@@ -107,7 +119,11 @@ public class OrderServiceImpl implements OrderService {
         System.out.println(new Date());
         Order savedOrder = orderRepository.save(order);
 
-        return convertToOrderResponse(savedOrder);
+        OrderResponse orderResponse = convertToOrderResponse(savedOrder);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Order", "CREATE", null, orderResponse, userId);
+
+        return orderResponse;
     }
 
     @Override
@@ -118,6 +134,8 @@ public class OrderServiceImpl implements OrderService {
         Customer customer = getCustomer(orderRequest.getCustomerId()); // get customer by id
         Employee employee = getEmployee(orderRequest.getEmployeeId()); // get employee by id
         Set<OrderDetail> orderDetails = orderDetailRepository.findAllByOrderId(orderId);
+
+        OrderResponse previousOrderResponse = convertToOrderResponse(order);
 
         // convert the array of order details to a set of order details
         Set<OrderDetail> orderDetailsRequest = new HashSet<>();
@@ -167,13 +185,21 @@ public class OrderServiceImpl implements OrderService {
         order.setCustomer(customer);
         order.setEmployee(employee);
 
+        OrderResponse actualOrderResponse = convertToOrderResponse(order);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Order", "UPDATE", previousOrderResponse, actualOrderResponse, userId);
+
         return convertToOrderResponse(orderRepository.save(order));
     }
 
     @Override
     public OrderResponse updateOrderStatus(String coffeeShopId, Integer orderId, String status) {
         Order order = getOrder(orderId, coffeeShopId); // get order by id
+        OrderResponse previousOrderResponse = convertToOrderResponse(order);
         order.setStatus(EOrderStatus.valueOf(status.toUpperCase()));
+        OrderResponse actualOrderResponse = convertToOrderResponse(order);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Order", "UPDATE", previousOrderResponse, actualOrderResponse, userId);
         return convertToOrderResponse(orderRepository.save(order));
     }
 
@@ -229,5 +255,17 @@ public class OrderServiceImpl implements OrderService {
         SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
         orderResponse.setDate(formatter.format(order.getDate()));
         return orderResponse;
+    }
+
+    private Integer obtainIdFromJwtToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new RuntimeException("Error: User is not found."));
+            return user.getId();
+        }
+
+        return null;
     }
 }

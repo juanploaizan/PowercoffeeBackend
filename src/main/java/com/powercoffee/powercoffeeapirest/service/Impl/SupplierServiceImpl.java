@@ -2,11 +2,16 @@ package com.powercoffee.powercoffeeapirest.service.Impl;
 
 import com.powercoffee.powercoffeeapirest.model.CoffeeShop;
 import com.powercoffee.powercoffeeapirest.model.Supplier;
+import com.powercoffee.powercoffeeapirest.model.User;
 import com.powercoffee.powercoffeeapirest.payload.request.suppliers.SupplierRequest;
+import com.powercoffee.powercoffeeapirest.payload.response.products.ProductResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.suppliers.SupplierResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.utils.PaginationResponse;
 import com.powercoffee.powercoffeeapirest.repository.CoffeeShopRepository;
 import com.powercoffee.powercoffeeapirest.repository.SupplierRepository;
+import com.powercoffee.powercoffeeapirest.repository.UserRepository;
+import com.powercoffee.powercoffeeapirest.security.services.UserDetailsImpl;
+import com.powercoffee.powercoffeeapirest.service.LoggerService;
 import com.powercoffee.powercoffeeapirest.service.SupplierService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,6 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -28,13 +35,17 @@ public class SupplierServiceImpl implements SupplierService {
     private final SupplierRepository supplierRepository;
 
     private final CoffeeShopRepository coffeeShopRepository;
+    private final UserRepository userRepository;
+    private final LoggerService loggerService;
 
     private final ModelMapper modelMapper;
 
 
-    public SupplierServiceImpl(SupplierRepository supplierRepository, CoffeeShopRepository coffeeShopRepository, ModelMapper modelMapper) {
+    public SupplierServiceImpl(SupplierRepository supplierRepository, CoffeeShopRepository coffeeShopRepository, UserRepository userRepository, LoggerService loggerService, ModelMapper modelMapper) {
         this.supplierRepository = supplierRepository;
         this.coffeeShopRepository = coffeeShopRepository;
+        this.userRepository = userRepository;
+        this.loggerService = loggerService;
         this.modelMapper = modelMapper;
     }
 
@@ -77,6 +88,9 @@ public class SupplierServiceImpl implements SupplierService {
     @Override
     public SupplierResponse getSupplierById(String supplierId, String coffeeShopId) {
         Supplier supplier = getSupplier(supplierId, coffeeShopId);
+        SupplierResponse supplierResponse = convertToResponse(supplier);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Supplier", "READ", supplierResponse, supplierResponse, userId);
         return convertToResponse(supplier);
     }
 
@@ -108,6 +122,10 @@ public class SupplierServiceImpl implements SupplierService {
                 .coffeeShop(coffeeShop)
                 .build();
 
+        SupplierResponse supplierResponse = convertToResponse(supplier);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Supplier", "CREATE", null, supplierResponse, userId);
+
         return convertToResponse(supplierRepository.save(supplier));
     }
 
@@ -116,6 +134,8 @@ public class SupplierServiceImpl implements SupplierService {
     public SupplierResponse updateSupplier(SupplierRequest supplierRequest, String supplierId, String coffeeShopId) {
 
         Supplier supplier = getSupplier(supplierId, coffeeShopId);
+
+        SupplierResponse previousSupplierResponse = convertToResponse(supplier);
 
         if (!Objects.equals(supplier.getNit(), supplierRequest.getNit())) {
             if (supplierRepository.existsByCoffeeShopIdAndNitAndDeletedAtIsNull(coffeeShopId, supplierRequest.getNit())) {
@@ -141,6 +161,10 @@ public class SupplierServiceImpl implements SupplierService {
         supplier.setName(supplierRequest.getName());
         supplier.setUpdatedAt(LocalDateTime.now());
 
+        SupplierResponse actualSupplierResponse = convertToResponse(supplier);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Supplier", "UPDATE", previousSupplierResponse, actualSupplierResponse, userId);
+
         return convertToResponse(supplierRepository.save(supplier));
     }
 
@@ -149,6 +173,9 @@ public class SupplierServiceImpl implements SupplierService {
     public void deleteSupplier(String id, String coffeeShopId) {
         Supplier supplier = getSupplier(id, coffeeShopId);
         supplier.setDeletedAt(LocalDateTime.now());
+        SupplierResponse previousSupplierResponse = convertToResponse(supplier);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Supplier", "DELETE", previousSupplierResponse, null, userId);
         supplierRepository.save(supplier);
     }
 
@@ -172,5 +199,17 @@ public class SupplierServiceImpl implements SupplierService {
 
     private SupplierResponse convertToResponse(Supplier supplier) {
         return modelMapper.map(supplier, SupplierResponse.class);
+    }
+
+    private Integer obtainIdFromJwtToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new RuntimeException("Error: User is not found."));
+            return user.getId();
+        }
+
+        return null;
     }
 }

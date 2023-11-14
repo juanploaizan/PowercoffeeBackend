@@ -2,9 +2,11 @@ package com.powercoffee.powercoffeeapirest.payload.response.customers;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 public class CustomerResponse {
     private String id;
     private String dni;

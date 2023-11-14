@@ -2,18 +2,24 @@ package com.powercoffee.powercoffeeapirest.service.Impl;
 
 import com.powercoffee.powercoffeeapirest.model.Category;
 import com.powercoffee.powercoffeeapirest.model.CoffeeShop;
+import com.powercoffee.powercoffeeapirest.model.User;
 import com.powercoffee.powercoffeeapirest.payload.request.categories.CategoryRequest;
 import com.powercoffee.powercoffeeapirest.payload.response.categories.CategoryResponse;
 import com.powercoffee.powercoffeeapirest.payload.response.utils.PaginationResponse;
 import com.powercoffee.powercoffeeapirest.repository.CategoryRepository;
 import com.powercoffee.powercoffeeapirest.repository.CoffeeShopRepository;
+import com.powercoffee.powercoffeeapirest.repository.UserRepository;
+import com.powercoffee.powercoffeeapirest.security.services.UserDetailsImpl;
 import com.powercoffee.powercoffeeapirest.service.CategoryService;
+import com.powercoffee.powercoffeeapirest.service.LoggerService;
 import jakarta.persistence.EntityNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +32,15 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CoffeeShopRepository coffeeShopRepository;
     private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
+    private final LoggerService loggerService;
     private final ModelMapper modelMapper;
 
-    public CategoryServiceImpl(CoffeeShopRepository coffeeShopRepository, CategoryRepository categoryRepository, ModelMapper modelMapper) {
+    public CategoryServiceImpl(CoffeeShopRepository coffeeShopRepository, CategoryRepository categoryRepository, UserRepository userRepository, LoggerService loggerService, ModelMapper modelMapper) {
         this.coffeeShopRepository = coffeeShopRepository;
         this.categoryRepository = categoryRepository;
+        this.userRepository = userRepository;
+        this.loggerService = loggerService;
         this.modelMapper = modelMapper;
     }
 
@@ -64,7 +74,10 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new EntityNotFoundException("Category not found with id " + categoryId));
 
         if (category.getCoffeeShop().getId().equals(coffeeShop.getId())) {
-            return convertToResponse(category);
+            CategoryResponse categoryResponse = convertToResponse(category);
+            Integer userId = obtainIdFromJwtToken();
+            loggerService.logAction("Category", "READ", categoryResponse, categoryResponse, userId);
+            return categoryResponse;
         } else {
             throw new EntityNotFoundException("Category not found with id " + categoryId);
         }
@@ -81,6 +94,10 @@ public class CategoryServiceImpl implements CategoryService {
         category.setName(categoryRequest.getName());
         category.setCoffeeShop(coffeeShop);
 
+        CategoryResponse categoryResponse = convertToResponse(category);
+        Integer userId = obtainIdFromJwtToken();
+        loggerService.logAction("Category", "CREATE", null, categoryResponse, userId);
+
         return convertToResponse(categoryRepository.save(category));
     }
 
@@ -95,7 +112,11 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new EntityNotFoundException("Category not found with id " + categoryId));
 
         if (category.getCoffeeShop().getId().equals(coffeeShop.getId())) {
+            CategoryResponse previousCategoryResponse = convertToResponse(category);
             category.setName(categoryRequest.getName());
+            CategoryResponse actualCategoryResponse = convertToResponse(category);
+            Integer userId = obtainIdFromJwtToken();
+            loggerService.logAction("Category", "UPDATE", previousCategoryResponse, actualCategoryResponse, userId);
             return convertToResponse(categoryRepository.save(category));
         } else {
             throw new EntityNotFoundException("Category not found with id " + categoryId);
@@ -123,6 +144,9 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new EntityNotFoundException("Category not found with id " + categoryId));
 
         if (category.getCoffeeShop().getId().equals(coffeeShop.getId())) {
+            CategoryResponse previousCategoryResponse = convertToResponse(category);
+            Integer userId = obtainIdFromJwtToken();
+            loggerService.logAction("Category", "DELETE", previousCategoryResponse, null, userId);
             categoryRepository.delete(category);
         } else {
             throw new EntityNotFoundException("Category not found with id " + categoryId);
@@ -134,5 +158,17 @@ public class CategoryServiceImpl implements CategoryService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         categoryResponse.setCreatedAt(category.getCreatedAt() != null ? category.getCreatedAt().format(formatter) : null);
         return categoryResponse;
+    }
+
+    private Integer obtainIdFromJwtToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new RuntimeException("Error: User is not found."));
+            return user.getId();
+        }
+
+        return null;
     }
 }
