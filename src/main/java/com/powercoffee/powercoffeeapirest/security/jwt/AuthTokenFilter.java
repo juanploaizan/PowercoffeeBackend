@@ -31,6 +31,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+
         String jwt = getTokenFromRequest(request);
 
         if (jwt == null) {
