@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/coffee-shops/{coffeeShopId}/suppliers")
 public class SupplierController {
@@ -34,11 +36,9 @@ public class SupplierController {
 
     // Endpoint for retrieving all suggested suppliers with pagination support
     @GetMapping("/suggested")
-    public ResponseEntity<PaginationResponse<SupplierResponse>> getSuggestedSuppliers(
-            @RequestParam(value = "pageNumber", defaultValue = Constants.DEFAULT_PAGE_NUMBER, required = false) Integer pageNumber,
-            @RequestParam(value = "pageSize", defaultValue = Constants.DEFAULT_PAGE_SIZE, required = false) Integer pageSize,
+    public ResponseEntity<List<SupplierResponse>> getSuggestedSuppliers(
             @PathVariable String coffeeShopId) {
-        return ResponseEntity.ok(supplierService.getSuggestedSuppliers(coffeeShopId, pageNumber, pageSize));
+        return ResponseEntity.ok(supplierService.getSuggestedSuppliers(coffeeShopId));
     }
 
     // Endpoint for retrieving a specific supplier by ID

@@ -57,21 +57,9 @@ public class SupplierServiceImpl implements SupplierService {
     }
 
     @Override
-    public PaginationResponse<SupplierResponse> getSuggestedSuppliers(String coffeeShopId, Integer pageNumber, Integer pageSize) {
-        Sort sort = Sort.by("name").ascending();
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
-        Page<Supplier> suggestedSupplierPage = supplierRepository.findAllSuggestedByCoffeeShopIdAndDeletedAtIsNull(coffeeShopId, pageable);
-        List<SupplierResponse> supplierResponseList = suggestedSupplierPage.getContent().stream().map(this::convertToResponse).toList();
-
-        return new PaginationResponse<SupplierResponse>().build(
-                supplierResponseList,
-                suggestedSupplierPage.getNumber(),
-                suggestedSupplierPage.getSize(),
-                suggestedSupplierPage.getNumberOfElements(),
-                suggestedSupplierPage.getTotalPages(),
-                suggestedSupplierPage.isFirst(),
-                suggestedSupplierPage.isLast()
-        );
+    public List<SupplierResponse> getSuggestedSuppliers(String coffeeShopId) {
+        List<Supplier> suppliers = supplierRepository.findAllSuggestedByCoffeeShopIdAndDeletedAtIsNull(coffeeShopId);
+        return suppliers.stream().map(this::convertToResponse).toList();
     }
 
     @Override
