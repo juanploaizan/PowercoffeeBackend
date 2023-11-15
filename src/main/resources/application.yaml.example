@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/powercoffee
-    username: postgres
-    password: 204060120
+    url:
+    username:
+    password:
 
   jpa:
     open-in-view: true
@@ -16,8 +16,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: servicioalcliente.powercoffee@gmail.com
-    password: nhdpchodeevrnxxt
+    username:
+    password:
     properties:
       mail:
         smtp:
@@ -32,6 +32,6 @@ server:
 
 powercoffee:
   app:
-    jwtSecret: hcyj3cDPGJNPmZMMipmQSbeH37gTknV6tFjoDaQwWw8rstJahUEiSFfgMqqpc2znKrpLC9mtfRe2aqLExCuBGXyWNhr9PyNQ8iykoMTuSqDRgw6w9bdYtyUkP2i9eSZX
+    jwtSecret:
     jwtExpirationMs: 86400000
-    frontendUrl: http://localhost:3000
+    frontendUrl:
